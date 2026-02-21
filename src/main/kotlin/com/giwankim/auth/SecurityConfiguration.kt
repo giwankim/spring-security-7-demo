@@ -1,14 +1,23 @@
 package com.giwankim.auth
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.MediaType
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.invoke
-import org.springframework.security.crypto.factory.PasswordEncoderFactories
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder
+import org.springframework.security.crypto.password.NoOpPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
+import org.springframework.security.crypto.password.StandardPasswordEncoder
+import org.springframework.security.crypto.password4j.Argon2Password4jPasswordEncoder
 import org.springframework.security.provisioning.JdbcUserDetailsManager
+import org.springframework.security.web.authentication.ott.OneTimeTokenGenerationSuccessHandler
 import javax.sql.DataSource
+
+private val logger = KotlinLogging.logger {}
 
 @Configuration
 class SecurityConfiguration {
@@ -16,8 +25,14 @@ class SecurityConfiguration {
     fun securityCustomizer(): Customizer<HttpSecurity> {
         return { http ->
             http {
-                authorizeHttpRequests {
-                    authorize("/admin", authenticated)
+                oneTimeTokenLogin {
+                    oneTimeTokenGenerationSuccessHandler =
+                        OneTimeTokenGenerationSuccessHandler { request, response, oneTimeToken ->
+                            response.writer.println("you've got console mail!")
+                            response.contentType = MediaType.TEXT_PLAIN_VALUE
+
+                            logger.info { "please go to http://localhost:${request.serverPort}/login/ott?token=${oneTimeToken.tokenValue}" }
+                        }
                 }
             }
         }
@@ -31,18 +46,13 @@ class SecurityConfiguration {
     }
 
     @Bean
-    fun passwordEncoder(): PasswordEncoder {
-        return PasswordEncoderFactories.createDelegatingPasswordEncoder()
+    fun delegatingPasswordEncoder(): DelegatingPasswordEncoder {
+        val encodingId = "password4j-argon2"
+        val encoders = mutableMapOf<String, PasswordEncoder>()
+        encoders[encodingId] = Argon2Password4jPasswordEncoder()
+        encoders["bcrypt"] = BCryptPasswordEncoder()
+        encoders["noop"] = NoOpPasswordEncoder.getInstance()
+        encoders["sha256"] = StandardPasswordEncoder()
+        return DelegatingPasswordEncoder(encodingId, encoders)
     }
-
-//    @Bean
-//    fun delegatingPasswordEncoder(): DelegatingPasswordEncoder {
-//        val encodingId = "password4j-argon2"
-//        val encoders = mutableMapOf<String, PasswordEncoder>()
-//        encoders.put(encodingId, Argon2Password4jPasswordEncoder())
-//        encoders.put("bcrypt", BCryptPasswordEncoder())
-//        encoders.put("noop", NoOpPasswordEncoder.getInstance())
-//        encoders.put("sha256", StandardPasswordEncoder())
-//        return DelegatingPasswordEncoder(encodingId, encoders)
-//    }
 }

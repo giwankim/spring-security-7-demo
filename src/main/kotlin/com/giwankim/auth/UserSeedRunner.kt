@@ -12,23 +12,34 @@ class UserSeedRunner(
     private val userDetailsManager: JdbcUserDetailsManager,
     private val passwordEncoder: PasswordEncoder,
 ) : ApplicationRunner {
-    override fun run(args: ApplicationArguments) {
-        createUserIfMissing("user", "user123", listOf("ROLE_USER"))
-        createUserIfMissing("admin", "admin123", listOf("ROLE_USER", "ROLE_ADMIN"))
-    }
+    private val defaultUsers = listOf(
+        SeedUser(username = DEFAULT_USER, rawPassword = "user123", authorities = listOf(ROLE_USER)),
+        SeedUser(username = DEFAULT_ADMIN, rawPassword = "admin123", authorities = listOf(ROLE_USER, ROLE_ADMIN)),
+    )
 
-    private fun createUserIfMissing(
-        username: String,
-        rawPassword: String,
-        authorities: List<String>,
-    ) {
-        if (userDetailsManager.userExists(username)) {
+    override fun run(args: ApplicationArguments) = defaultUsers.forEach(::createUserIfMissing)
+
+    private fun createUserIfMissing(seedUser: SeedUser) {
+        if (userDetailsManager.userExists(seedUser.username)) {
             return
         }
-        val userDetails = User.withUsername(username)
-            .password(passwordEncoder.encode(rawPassword))
-            .authorities(*authorities.toTypedArray())
+        val userDetails = User.withUsername(seedUser.username)
+            .password(passwordEncoder.encode(seedUser.rawPassword))
+            .authorities(*seedUser.authorities.toTypedArray())
             .build()
         userDetailsManager.createUser(userDetails)
     }
+
+    private companion object {
+        const val DEFAULT_USER = "user"
+        const val DEFAULT_ADMIN = "admin"
+        const val ROLE_USER = "ROLE_USER"
+        const val ROLE_ADMIN = "ROLE_ADMIN"
+    }
 }
+
+private data class SeedUser(
+    val username: String,
+    val rawPassword: String,
+    val authorities: List<String>,
+)
