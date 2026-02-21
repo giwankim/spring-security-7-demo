@@ -1,3 +1,19 @@
 spring:
   application:
     name: auth
+
+  # PostgreSQL connection managed by Docker Compose (see compose.yaml).
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mydatabase
+    username: myuser
+    password: secret
+
+  # Run schema.sql on every startup. Safe because statements use "if not exists".
+  sql:
+    init:
+      mode: always
+
+  # Only start Docker Compose services; don't stop them when the app shuts down.
+  docker:
+    compose:
+      lifecycle-management: start_only
