@@ -23,7 +23,7 @@ private val logger = KotlinLogging.logger {}
 class SecurityConfiguration {
     @Bean
     fun securityCustomizer(): Customizer<HttpSecurity> {
-        return { http ->
+        return Customizer { http ->
             http {
                 oneTimeTokenLogin {
                     oneTimeTokenGenerationSuccessHandler =
@@ -33,6 +33,11 @@ class SecurityConfiguration {
 
                             logger.info { "please go to http://localhost:${request.serverPort}/login/ott?token=${oneTimeToken.tokenValue}" }
                         }
+                }
+                webAuthn {
+                    allowedOrigins = setOf("http://localhost:8080")
+                    rpId = "localhost"
+                    rpName = "bootiful"
                 }
             }
         }
