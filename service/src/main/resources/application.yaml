@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Points to the auth-service's OIDC discovery endpoint
+          # Spring auto-fetches /.well-known/openid-configuration to obtain the JWK set URI for token verification
+          issuer-uri: http://localhost:8080
+
+server:
+  # Runs on a separate port from auth-service (8080)
+  port: 8081
