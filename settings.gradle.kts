@@ -5,3 +5,5 @@ pluginManagement {
 }
 
 rootProject.name = "auth"
+
+include(":auth-service")
