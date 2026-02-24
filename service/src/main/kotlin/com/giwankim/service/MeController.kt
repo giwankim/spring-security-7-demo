@@ -8,6 +8,6 @@ import java.security.Principal
 class MeController {
     @GetMapping
     fun me(principal: Principal): Map<String, String> {
-        return mapOf("name" to principal.name)
+        return mapOf("message" to "hello, ${principal.name}!")
     }
 }

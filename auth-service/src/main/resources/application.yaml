@@ -17,6 +17,9 @@ spring:
                 - "refresh_token"
               redirect-uris:
                 - "http://127.0.0.1:8082/login/oauth2/code/spring"
+              scopes:
+                - "openid"
+                - "profile"
 
   # PostgreSQL connection managed by Docker Compose (see compose.yaml).
   datasource:
