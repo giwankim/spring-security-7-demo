@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.MediaType
 import org.springframework.security.authorization.AuthorizationManagerFactories
-import org.springframework.security.authorization.AuthorizationManagerFactory
 import org.springframework.security.authorization.DefaultAuthorizationManagerFactory
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -27,21 +26,20 @@ private val logger = KotlinLogging.logger {}
 @Configuration
 class SecurityConfiguration {
     @Bean
-    fun authorizationManagerFactory(): AuthorizationManagerFactory<Any> {
-        return AuthorizationManagerFactories.multiFactor<Any>()
+    fun securityCustomizer(): Customizer<HttpSecurity> {
+        val defaultAmf = DefaultAuthorizationManagerFactory<Any>()
+        val mfaAmf = AuthorizationManagerFactories.multiFactor<Any>()
             .requireFactor { b -> b.ottAuthority().validDuration(10.minutes.toJavaDuration()) }
             .requireFactor { b -> b.passwordAuthority().validDuration(10.minutes.toJavaDuration()) }
             .build()
-    }
 
-    @Bean
-    fun securityCustomizer(globalAmf: AuthorizationManagerFactory<Any>): Customizer<HttpSecurity> {
-        val permissiveAma = DefaultAuthorizationManagerFactory<Any>()
         return Customizer { http ->
             http {
                 authorizeHttpRequests {
-                    authorize("/admin", globalAmf.authenticated())
-                    authorize("/user", permissiveAma.authenticated())
+                    authorize("/admin", mfaAmf.authenticated())
+                    authorize("/user", defaultAmf.authenticated())
+                    authorize("/userinfo", defaultAmf.authenticated())
+                    authorize("/oauth2/**", defaultAmf.authenticated())
                 }
                 oneTimeTokenLogin {
                     oneTimeTokenGenerationSuccessHandler =
