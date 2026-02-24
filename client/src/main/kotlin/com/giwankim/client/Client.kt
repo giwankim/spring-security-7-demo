@@ -1,18 +1,12 @@
 package com.giwankim.client
 
-import org.springframework.stereotype.Component
-import org.springframework.web.client.RestClient
-import org.springframework.web.client.body
+import org.springframework.security.oauth2.client.annotation.ClientRegistrationId
+import org.springframework.web.service.annotation.GetExchange
 
-@Component
-class Client(private val restClient: RestClient) {
-    fun request(accessToken: String): Message {
-        return restClient.get()
-            .uri("http://localhost:8081")
-            .headers { it.setBearerAuth(accessToken) }
-            .retrieve()
-            .body<Message>()!!
-    }
+@ClientRegistrationId("spring")
+fun interface Client {
+    @GetExchange("http://localhost:8081")
+    fun request(): Message
 }
 
 data class Message(val message: String)
